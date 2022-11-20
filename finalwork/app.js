@@ -1,4 +1,28 @@
-
+const constraints = {
+  姓名: {
+    presence: {
+      message: "是必填欄位"
+    },
+  },
+  電話:{
+    presence: {
+      message: "是必填欄位"
+    },
+  },
+  Email:{
+    presence: {
+      message: "是必填欄位"
+    },
+    email: {
+      message: "格式錯誤"
+    },
+  },
+  寄送地址:{
+    presence: {
+      message: "是必填欄位"
+    },
+  }
+};
 
 
 // 取得商品清單
@@ -183,27 +207,49 @@ function initialCarts(ary,obj) {
 
 const orderInfoBtn = document.querySelector('.orderInfo-btn');
 const orderInfoForm = document.querySelector('.orderInfo-form');
+const orderInfoMessage = document.querySelectorAll('.orderInfo-message');
+const inputs = document.querySelectorAll("input[type=text],input[type=tel],input[type=email]");
+
+inputs.forEach((item) => {
+  // console.log(item)
+    
+   // console.log(item.nextElementSibling)
+    item.addEventListener("change", function() {
+      //預設為空值
+      item.nextElementSibling.textContent = "";
+      
+      // 驗證回傳的內容
+      let errors = validate(orderInfoForm, constraints);
+      // console.log(errors)
+      
+      //呈現在畫面上
+      if(errors){
+        // console.log(Object.keys(errors)) //keys -> 屬性
+        
+        Object.keys(errors).forEach(function(keys) {
+          // console.log(keys); 
+          document.querySelector(`.${keys}`).textContent = errors[keys] 
+        })
+      }
+    });
+  });
 
 orderInfoBtn.addEventListener('click', function (e) {
   e.preventDefault();
   console.log(e.target.value);
 
-  if (document.getElementById('customerName').value.length == 0) {
-    alert("請輸入姓名");
+  let checkOkay = false;
+
+  orderInfoMessage.forEach(function (item) {
+    if (item.textContent !== '') {
+      checkOkay = false;
+    }
+    else checkOkay = true;
+  })
+
+  if (!checkOkay) {
     return;
-  }
-  if (document.getElementById('customerPhone').value.length == 0) {
-    alert("請輸入電話");
-    return;
-  }
-  if (document.getElementById('customerEmail').value.length == 0) {
-    alert("請輸入E-Mail");
-    return;
-  }
-  if (document.getElementById('customerAddress').value.length == 0) {
-    alert("請輸入寄送地址");
-    return;
-  }
+  } 
 
   let orders = {}
   orders.name = document.getElementById('customerName').value;
@@ -213,7 +259,7 @@ orderInfoBtn.addEventListener('click', function (e) {
   orders.payment = document.getElementById('tradeWay').value;
   console.log(orders);
   addOrders(orders);
-  // orderInfoForm.reset();
+  orderInfoForm.reset();
 })
 
 function addOrders(orders) {
@@ -235,3 +281,4 @@ function addOrders(orders) {
     alert("預訂失敗");
   })
 }
+
