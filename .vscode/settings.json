@@ -1,3 +1,5 @@
 {
-    "liveServer.settings.port": 5676
+    "liveServer.settings.port": 5676,
+    "better-comments.highlightPlainText": true,
+    "material-icon-theme.activeIconPack": "vue"
 }
