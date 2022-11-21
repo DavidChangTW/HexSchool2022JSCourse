@@ -1,22 +1,4 @@
-// C3.js
-let chart = c3.generate({
-  bindto: '#chart', // HTML 元素綁定
-  data: {
-      type: "pie",
-      columns: [
-      ['Louvre 雙人床架', 1],
-      ['Antony 雙人床架', 2],
-      ['Anty 雙人床架', 3],
-      ['其他', 4],
-      ],
-      colors:{
-          "Louvre 雙人床架":"#DACBFF",
-          "Antony 雙人床架":"#9D7FEA",
-          "Anty 雙人床架": "#5434A7",
-          "其他": "#301E5F",
-      }
-  },
-});
+
 
 // 取得所有預定清單
 axios.get('https://livejs-api.hexschool.io/api/livejs/v1/admin/davidchang/orders',
@@ -54,7 +36,7 @@ function initialOrders(orders) {
   ';
 
   let productsObj = {}
-  let categoryArray = [];
+  let categoryObj = {};
   let productsArray = [];
 
   orders.forEach(function (item,index) {
@@ -77,13 +59,23 @@ function initialOrders(orders) {
     item.products.forEach(function(item){
       ordersStr += `<p>${item.title}</p>`;
 
-      if (productsObj[item.title]) {
-        
+      // console.log(item.category);
+      if (categoryObj[item.category]) {
+        categoryObj[item.category].該類別營收 += item.price*item.quantity;
       } else {
-        productsObj[item.title] = item.title;
+        categoryObj[item.category] = {類型:item.category};
+        categoryObj[item.category].該類別營收 = item.price*item.quantity;
       }
 
-
+      // console.log(item.title);
+      if (productsObj[item.title]) {
+        productsObj[item.title].該產品營收 += item.price*item.quantity;
+        productsObj[item.title].該產品銷售數量 += item.quantity;
+      } else {
+        productsObj[item.title] = {類型:item.title};
+        productsObj[item.title].該產品營收 = item.price*item.quantity;
+        productsObj[item.title].該產品銷售數量 = item.quantity;
+      }
     })
     
     ordersStr += `    
@@ -99,8 +91,80 @@ function initialOrders(orders) {
     `;
   });
   orderPageTable.innerHTML = ordersStr;
+  // console.log(categoryObj);
   console.log(productsObj);
 
+  let categoryData = [];
+  let category = Object.keys(categoryObj);
+  // area output ["床架","窗簾","收納"]
+  category.forEach(function(item,index){
+    let ary = [];
+    ary.push(item);
+    ary.push(categoryObj[item].該類別營收);
+    categoryData.push(ary);
+  })
+  console.log(categoryData);  
+
+  let productsData = [];
+  let products = Object.keys(productsObj);
+  // area output ["Charles 雙人床架","Louvre 雙人床架／雙人加大","Antony 雙人床架／雙人加大",.....]
+  products.forEach(function(item,index){
+    let ary = [];
+    ary.push(item);
+    ary.push(productsObj[item].該產品營收);
+    productsData.push(ary);
+  })  
+
+  productsData.sort(function(a, b) {
+    // boolean false == 0; true == 1
+    return b[1] > a[1]? 1 : -1;
+  });
+  console.log(productsData);
+
+  let productsSortData = [];
+  let otherSum = 0;
+  productsData.forEach(function (item,index) {
+    // console.log(item,index);
+    if (index <= 2) {
+      productsSortData.push(item);
+    } else {
+      otherSum += item[1];
+      if (index === (productsData.length-1)) {
+        productsSortData.push(['其他',otherSum]);
+      }
+    }
+  })
+  console.log(productsSortData);
+
+  // C3.js
+  let chartCategory = c3.generate({
+    bindto: '#chartCategory', // HTML 元素綁定
+    data: {
+        type: "pie",
+        columns: categoryData,
+        // colors:{
+        //     "Louvre 雙人床架":"#DACBFF",
+        //     "Antony 雙人床架":"#9D7FEA",
+        //     "Anty 雙人床架": "#5434A7",
+        //     "其他": "#301E5F",
+        // }
+    },
+  });
+
+  let chartProducts = c3.generate({
+    bindto: '#chartProducts', // HTML 元素綁定
+    data: {
+        type: "pie",
+        // columns: productsData,
+        columns: productsSortData,
+        // colors:{
+        //     "Louvre 雙人床架":"#DACBFF",
+        //     "Antony 雙人床架":"#9D7FEA",
+        //     "Anty 雙人床架": "#5434A7",
+        //     "其他": "#301E5F",
+        // }
+    },
+  });
 
   const discardAllBtn = document.querySelector('.discardAllBtn');
   const delSingleOrderBtn = document.querySelectorAll('.delSingleOrder-Btn');
