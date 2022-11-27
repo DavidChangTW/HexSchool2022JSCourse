@@ -289,7 +289,7 @@ inputs.forEach((item) => {
   // console.log(item)
     
    // console.log(item.nextElementSibling)
-    item.addEventListener("change", function() {
+    item.addEventListener("input", function() {
       //預設為空值
       item.nextElementSibling.textContent = "";
       
