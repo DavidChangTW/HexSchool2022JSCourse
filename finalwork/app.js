@@ -8,6 +8,15 @@ const constraints = {
     presence: {
       message: "是必填欄位"
     },
+    length: {
+      minimum: 8,
+      maximum: 10,
+      message: "需輸入8~10位數"
+    },
+    numericality: {
+      onlyInteger: true,
+      message: "需輸入數字"
+    },
   },
   Email:{
     presence: {
@@ -25,37 +34,24 @@ const constraints = {
 };
 
 
-// 取得商品清單
+// *取得商品清單
 axios.get('https://livejs-api.hexschool.io/api/livejs/v1/customer/davidchang/products')
 .then(function (response) {
   // 成功會回傳的內容
   // console.log(response.data.products);
   initialProducts(response.data.products);
 
-  // 產品搜尋
-  const productSelect = document.querySelector('.productSelect');
-  productSelect.addEventListener("change", function (e) {
-    if (e.target.value === '全部') {
-      initialProducts(response.data.products);
-    } else {
-      let tempData = [];
-      response.data.products.forEach(function (item) {
-        if (e.target.value === item.category) {
-          tempData.push(item);
-        }
-      })
-      initialProducts(tempData);
-    }
-  });
+  // *產品搜尋
+  filterProduct(response.data.products);
 
-  // 加入購物車
-  // const addCardBtn = document.querySelector('.addCardBtn');
+
+  // *加入購物車
   const productWrap = document.querySelector('.productWrap');
   productWrap.addEventListener("click",function (e) {
     e.preventDefault();
     if (e.target.nodeName === 'A') {
       console.log(e.target.getAttribute('data-id'));
-      addCarts(e.target.getAttribute('data-id'),5);
+      addCarts(e.target.getAttribute('data-id'), 1);  // *傳入購物產品ID與數量
     }
   })
 
@@ -65,6 +61,25 @@ axios.get('https://livejs-api.hexschool.io/api/livejs/v1/customer/davidchang/pro
   console.log(error);
 })
 
+// *產品搜尋
+function filterProduct(ary) {
+  const productSelect = document.querySelector('.productSelect');
+  productSelect.addEventListener("change", function (e) {
+    if (e.target.value === '全部') {
+      initialProducts(ary);
+    } else {
+      let tempData = [];
+      ary.forEach(function (item) {
+        if (e.target.value === item.category) {
+          tempData.push(item);
+        }
+      })
+      initialProducts(tempData);
+    }
+  });
+}
+
+// *產品清單渲染
 function initialProducts(ary) {
   const productWrap = document.querySelector('.productWrap');
   let productStr = '';
@@ -83,26 +98,51 @@ function initialProducts(ary) {
   productWrap.innerHTML = productStr;
 }
 
+/**
+ * *加入購物車 
+ * @param productsId 產品ID
+ * @param productsQuantity 該產品加入購物車數量
+ */ 
 function addCarts(productsId, productsQuantity) {
-  axios.post('https://livejs-api.hexschool.io/api/livejs/v1/customer/davidchang/carts',
-  {
-    "data": {
-      "productId": productsId,
-      "quantity": productsQuantity
-    }  
-  })
+  let tempProductsQuantity = 0;
+  // *先取得既有購物車內容
+  axios.get('https://livejs-api.hexschool.io/api/livejs/v1/customer/davidchang/carts')
   .then(function (response) {
-    // 成功會回傳的內容
-    console.log(response.data);
-    initialCarts(response.data.carts, response.data);
+    // *
+    response.data.carts.forEach(function (item) {
+      if (item.product.id === productsId) {
+        tempProductsQuantity = item.quantity;
+      }
+    }) 
+    tempProductsQuantity += productsQuantity;
+
+    // *將產品加入購物車
+    axios.post('https://livejs-api.hexschool.io/api/livejs/v1/customer/davidchang/carts',
+    {
+      "data": {
+        "productId": productsId,
+        "quantity": tempProductsQuantity
+        // "quantity": productsQuantity
+      }  
+    })
+    .then(function (response) {
+      // 成功會回傳的內容
+      console.log(response.data);
+      initialCarts(response.data.carts, response.data);
+    })
+    .catch(function (error) {
+    // 失敗會回傳的內容
+      console.log(error);
+    })
+
   })
   .catch(function (error) {
-  // 失敗會回傳的內容
+    // 失敗會回傳的內容
     console.log(error);
   })
 }
 
-// 取得購物車 
+// *取得購物車 
 axios.get('https://livejs-api.hexschool.io/api/livejs/v1/customer/davidchang/carts')
 .then(function (response) {
   // 成功會回傳的內容
@@ -114,6 +154,7 @@ axios.get('https://livejs-api.hexschool.io/api/livejs/v1/customer/davidchang/car
   console.log(error);
 })
 
+// *購物車渲染
 function initialCarts(ary,obj) {
   const shoppingCart = document.querySelector('.shoppingCart-table');
   let cartStr = ' \
@@ -125,7 +166,7 @@ function initialCarts(ary,obj) {
   <th width="15%"></th> \
   </tr> \
   ';
-  ary.forEach(function (item, index) {
+  ary.forEach(function (item, index) {  //<td>${item.quantity}</td>
     cartStr += `
     <tr>
       <td>
@@ -135,7 +176,8 @@ function initialCarts(ary,obj) {
         </div>
       </td>
       <td>NT$${item.product.price.toFixed(0).toString().replace(/(\d)(?=(?:\d{3})+$)/g,"$1,")}</td>
-      <td>${item.quantity}</td>
+      
+      <td><input type="number" min="0" max="100" id="quantity" value=${item.quantity} data-id=${item.id}></td>
       <td>NT$${(item.product.price*item.quantity).toFixed(0).toString().replace(/(\d)(?=(?:\d{3})+$)/g,"$1,")}</td>
       <td class="discardBtn">
         <a href="#" class="material-icons" data-id="${item.id}">
@@ -163,6 +205,7 @@ function initialCarts(ary,obj) {
   const discardAllBtn = document.querySelector('.discardAllBtn');
   const discardBtn = document.querySelectorAll('.discardBtn');
   
+  // *刪除購物車內所有商品
   discardAllBtn.addEventListener('click', function (e) {
     e.preventDefault();
     console.log(e.target.nodeName);
@@ -172,7 +215,7 @@ function initialCarts(ary,obj) {
       .then(function (response) {
         console.log(response.data);
         alert(response.data.message);
-        initialCarts(response.data.carts, response.data);
+        initialCarts(response.data.carts, response.data); // *刪除完成，重新渲染
       })
       .catch(function (error) {
         // 失敗會回傳的內容
@@ -182,6 +225,7 @@ function initialCarts(ary,obj) {
     }
   })
   
+  // *刪除購物車內某項商品
   discardBtn.forEach(function (item) {
     item.addEventListener('click', function (e) {
       e.preventDefault();
@@ -192,7 +236,7 @@ function initialCarts(ary,obj) {
         .then(function (response) {
           console.log(response.data);
           // alert(response.data.message);
-          initialCarts(response.data.carts, response.data);
+          initialCarts(response.data.carts, response.data); // *刪除完成，重新渲染
         })
         .catch(function (error) {
           // 失敗會回傳的內容
@@ -203,6 +247,37 @@ function initialCarts(ary,obj) {
     })
   })
 
+  // *更新購物車數量
+  const quantityBtn = document.querySelectorAll('#quantity');
+  quantityBtn.forEach(function (item) {
+    item.addEventListener('change', function (e) {
+      if (e.target.nodeName === 'INPUT') {
+        if (parseInt(e.target.value) === 0) {
+          alert("商品數量不可為0");
+          return;
+        }
+        console.log(e.target.getAttribute('data-id'));
+        console.log(e.target.value);
+        axios.patch(`https://livejs-api.hexschool.io/api/livejs/v1/customer/davidchang/carts`,
+        {
+          "data": {
+            "id": e.target.getAttribute('data-id'),
+            "quantity": parseInt(e.target.value) 
+          }  
+        })
+        .then(function (response) {
+          console.log(response.data);
+          // alert(response.data.message);
+          initialCarts(response.data.carts, response.data); // *更新完成，重新渲染
+        })
+        .catch(function (error) {
+          // 失敗會回傳的內容
+          console.log(error);
+          // alert(error.message);
+        })
+      }      
+    })
+  })
 }
 
 const orderInfoBtn = document.querySelector('.orderInfo-btn');
@@ -234,19 +309,19 @@ inputs.forEach((item) => {
     });
   });
 
+// *訂單格式檢查，成功即送出訂單
 orderInfoBtn.addEventListener('click', function (e) {
   e.preventDefault();
   console.log(e.target.value);
 
-  let checkOkay = false;
-
+  let checkOkay = true; // *資料檢查旗標
   orderInfoMessage.forEach(function (item) {
+    console.log(item.textContent);
     if (item.textContent !== '') {
       checkOkay = false;
     }
-    else checkOkay = true;
   })
-
+  // *若有資料檢查未通過，即跳出
   if (!checkOkay) {
     return;
   } 
@@ -262,6 +337,7 @@ orderInfoBtn.addEventListener('click', function (e) {
   orderInfoForm.reset();
 })
 
+// *新增訂單
 function addOrders(orders) {
   axios.post('https://livejs-api.hexschool.io/api/livejs/v1/customer/davidchang/orders',
   {

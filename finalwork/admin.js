@@ -1,12 +1,11 @@
-
-
-// 取得所有預定清單
-axios.get('https://livejs-api.hexschool.io/api/livejs/v1/admin/davidchang/orders',
-{
+const token = {
   headers: {
     'Authorization': 'l8RBNxrth3etIQcXKV4Kn3OaZdi2'
   }
-})
+};
+
+// 取得所有預定清單
+axios.get('https://livejs-api.hexschool.io/api/livejs/v1/admin/davidchang/orders', token)
 .then(function (response) {
   // 成功會回傳的內容
   console.log(response.data.orders);
@@ -180,11 +179,7 @@ function initialOrders(orders) {
     console.log(e.target.nodeName);
     console.log(e.target.getAttribute('class'));
     if (e.target.nodeName === 'A') {
-      axios.delete('https://livejs-api.hexschool.io/api/livejs/v1/admin/davidchang/orders',{
-        headers: {
-          'Authorization': 'l8RBNxrth3etIQcXKV4Kn3OaZdi2'
-        }
-      })
+      axios.delete('https://livejs-api.hexschool.io/api/livejs/v1/admin/davidchang/orders', token)
       .then(function (response) {
         console.log(response.data);
         alert(response.data.message);
@@ -205,11 +200,7 @@ function initialOrders(orders) {
       console.log(e.target.nodeName);
       console.log(e.target.getAttribute('data-id'));
       if (e.target.nodeName === 'INPUT') {
-        axios.delete(`https://livejs-api.hexschool.io/api/livejs/v1/admin/davidchang/orders/${e.target.getAttribute('data-id')}`,{
-          headers: {
-            'Authorization': 'l8RBNxrth3etIQcXKV4Kn3OaZdi2'
-          }
-        })
+        axios.delete(`https://livejs-api.hexschool.io/api/livejs/v1/admin/davidchang/orders/${e.target.getAttribute('data-id')}`, token)
         .then(function (response) {
           console.log(response.data);
           initialOrders(response.data.orders);
@@ -237,11 +228,7 @@ function initialOrders(orders) {
             "id": e.target.getAttribute('data-id'),
             "paid": (e.target.textContent==='已處理') ? false : true
           }
-        },{
-          headers: {
-            'Authorization': 'l8RBNxrth3etIQcXKV4Kn3OaZdi2'
-          }
-        })
+        }, token)
         .then(function (response) {
           console.log(response.data);
           initialOrders(response.data.orders);
